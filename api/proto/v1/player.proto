@@ -1,0 +1,42 @@
+syntax = "proto3";
+package player;
+
+
+// The Player service definition.
+service Player {   
+  // Get all Players with filter - A server-to-client streaming RPC.
+  rpc GetPlayers(PlayerFilter) returns (stream PlayerRequest) {}
+  // Create a new Player - A simple RPC 
+  rpc CreatePlayer(PlayerRequest) returns (PlayerResponse) {}
+  // Return a specific player based on its id
+  rpc GetPlayer(PlayerId) returns (PlayerRequest) {}
+}
+
+// Request message for creating a new player
+message PlayerRequest {
+  // API versioning
+  string api = 1;
+  string id = 2;  // Unique ID number for a Player, typically a UUIDv4.
+  string username = 3;
+  string email = 4;
+  string phone= 5;
+}
+
+message PlayerResponse {
+  // API versioning
+  string api = 1;
+  string id = 2;
+  bool success = 3;
+}
+
+message PlayerFilter {   
+  // API versioning
+  string api = 1; 
+  string keyword = 2;
+}
+
+message PlayerId {   
+  // API versioning
+  string api = 1; 
+  string id = 2;
+}
