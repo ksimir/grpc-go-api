@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -13,10 +14,16 @@ import (
 )
 
 const (
-	address = "localhost:50051"
 	// apiVersion is version of API is provided by server
 	apiVersion = "v1"
 )
+
+// Config is configuration for remote server
+type Config struct {
+	// gRPC server address/port connection parameters section
+	GRPCAddress string
+	GRPCPort    string
+}
 
 // createPlayer calls the RPC method CreatePlayer of PlayerServer
 func createPlayer(client v1.PlayerClient, player *v1.PlayerRequest) {
@@ -66,6 +73,13 @@ func getPlayer(client v1.PlayerClient, filter *v1.PlayerId) {
 }
 
 func main() {
+	var cfg Config
+	flag.StringVar(&cfg.GRPCAddress, "grpc-address", "", "gRPC address to connect to")
+	flag.StringVar(&cfg.GRPCPort, "grpc-port", "", "gRPC port to connect to")
+	flag.Parse()
+
+	address := cfg.GRPCAddress + ":" + cfg.GRPCPort
+
 	// Set up a connection to the gRPC server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
