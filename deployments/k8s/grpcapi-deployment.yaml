@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: grpc-go-api-deployment
+  labels:
+    app: grpc-go-api
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: grpc-go-api
+    spec:       
+      containers:
+      - name: grpc-go-api
+        image: asia.gcr.io/samirh-sandbox/grpc-go-api:v1
+        ports:
+        - containerPort: 50051
