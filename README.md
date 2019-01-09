@@ -10,6 +10,7 @@ export PROJECT_ID=$(gcloud config list project --format "value(core.project)")
 ```
 
 ## Build Docker image using as parameters your own GCP project info:
+Update the below command with your own GCP Project ID as well as Cloud Spanner instance/database names.
 ```
 $ docker build \
 --build-arg projectid=test-project \
