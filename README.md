@@ -67,4 +67,10 @@ $ cd deployments/endpoints
 $ gcloud endpoints services deploy player.pb api_config.yaml
 ```
 
+Then delete and redeploy your gRPC pods using the Cloud Endpoints ESP sidecar container
+```
+$ kubectl delete deployment grpc-go-api-deployment
+$ kubectl create -f grpcapi-endpoints-deployment.yaml
+```
+
 If the deployment is successful, you can access the GCP Console and start seeing metrics from the Cloud Endpoints portal.
