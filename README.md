@@ -47,3 +47,24 @@ Using the above command, get the EXTERNAL-IP that was assigned automatically to 
 ```
 $ go run main.go -grpc-address=<EXTERNAL-IP> -grpc-port=8080
 ```
+
+## Secure your gRPC API using Cloud Endpoints
+To first deploy Cloud Endpoints config without authentication, use api_config.yaml config file.
+
+Create a proto descriptor file
+```
+$ protoc --include_imports --include_source_info --descriptor_set_out deployments/endpoints/player.pb api/proto/v1/player.proto
+```
+
+Replace <YOUR_PROJECT_ID> with your own GCP Project ID in the following config files:
+- deployments/endpoints/api_config.yaml
+- deployments/k8s/grpcapi-deployment.yaml
+- deployments/k8s/grpcapi-endpoints-deployment.yaml
+
+Deploy the Endpoints configuration
+```
+$ cd deployments/endpoints
+$ gcloud endpoints services deploy player.pb api_config.yaml
+```
+
+If the deployment is successful, you can access the GCP Console and start seeing metrics from the Cloud Endpoints portal.

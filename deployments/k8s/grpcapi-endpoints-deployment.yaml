@@ -1,0 +1,29 @@
+# Use this deployment if you plan to deploy your gRPC service to Cloud Endpoints using ESP
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: grpc-go-api-deployment
+  labels:
+    app: grpc-go-api
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: grpc-go-api
+    spec:       
+      containers:
+      - name: grpc-go-api
+        image: asia.gcr.io/<YOUR_PROJECT_ID>/grpc-go-api:v1 # replace <YOUR_PROJECT_ID>
+        ports:
+        - containerPort: 50051
+      - name: esp
+        image: gcr.io/endpoints-release/endpoints-runtime:1
+        args: [
+          "-P", "9000",
+          "-a", "grpc://127.0.0.1:50051",
+          "-s", "player.endpoints.<YOUR_PROJECT_ID>.cloud.goog", # replace <YOUR_PROJECT_ID>
+          "--rollout_strategy", "managed",
+        ]
+        ports:
+          - containerPort: 9000
