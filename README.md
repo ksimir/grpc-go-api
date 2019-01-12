@@ -45,7 +45,7 @@ kubectl get svc
 
 ```
 $ EXTERNAL-IP=$(kubectl get service grpc-go-api-service --output jsonpath="{.status.loadBalancer.ingress[0].ip}")
-$ go run main.go -grpc-address=${EXTERNAL-IP} -grpc-port=8080
+$ go run main.go --grpc-address=${EXTERNAL-IP} --grpc-port=8080
 ```
 
 ## Secure your gRPC API using Cloud Endpoints
@@ -76,3 +76,44 @@ $ kubectl create -f grpcapi-endpoints-service.yaml
 ```
 
 If the deployment is successful, you can access the GCP Console and start seeing metrics from the Cloud Endpoints portal.
+
+## Configuring a quota for the gRPC API
+Redeploy the Cloud Endpoints config predefined for quotas (api_config_quota.yaml)
+```
+$ cd deployments/endpoints
+$ gcloud endpoints services deploy player.pb api_config_quota.yaml
+```
+
+Follow the instructions [here](https://cloud.google.com/docs/authentication/api-keys#creating_an_api_key) to create a new API key.
+
+Test your gRPC API quota using the created API key
+Replace API_KEY in the following command
+
+```
+$ EXTERNAL-IP=$(kubectl get service grpc-go-api-service --output jsonpath="{.status.loadBalancer.ingress[0].ip}")
+$ go run main.go \
+    --grpc-address=${EXTERNAL-IP} \
+    --grpc-port=8080
+    --api-key=API_KEY
+```
+
+## Configuring service account authentication for the gRPC API
+Redeploy the Cloud Endpoints config predefined for service account authentication (api_config_auth.yaml)
+```
+$ cd deployments/endpoints
+$ gcloud endpoints services deploy player.pb api_config_auth.yaml
+```
+
+Follow the instructions [here](https://cloud.google.com/endpoints/docs/grpc/service-account-authentication#creating_the_consumer_service_account_and_key) to create a new service account.
+
+Test your gRPC API using a service account
+Replace PROJECT_ID and SERVICE_ACCOUNT in the following command
+
+```
+$ EXTERNAL-IP=$(kubectl get service grpc-go-api-service --output jsonpath="{.status.loadBalancer.ingress[0].ip}")
+$ go run main.go \
+    --grpc-address=${EXTERNAL-IP} \
+    --grpc-port=8080
+    --keyfile=SERVICE_ACCOUNT_KEY.json \
+    --audience=player.endpoints.PROJECT_ID.cloud.goog \
+```

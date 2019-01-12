@@ -15,27 +15,6 @@ apis:
 # API usage restrictions.
 usage:
   rules:
-  # Allow only registered calls for all methods. This is mandatory for using quotas
+  # Allow unregistered calls for all methods. This is mandatory for using quotas
   - selector: "*"
-    allow_unregistered_calls: false
-
-# Quota settings.
-# Below is the configuration to set a quota of 5 call/min on CreatePlayer method
-metrics:
-  # Define a metric for CreatePlayer requests.
-  - name: "createplayer-requests"
-    display_name: "CreatePlayer requests"
-    value_type: INT64
-    metric_kind: DELTA
-quota:
-  limits:
-    # Define the limit or the createplayer-requests metric.
-    - name: "createplayer-limit"
-      metric: "createplayer-requests"
-      unit: "1/min/{project}"
-      values:
-        STANDARD: 5
-  metric_rules:
-      - metric_costs:
-          "createplayer-requests": 1
-        selector: player.Player.CreatePlayer
+    allow_unregistered_calls: true

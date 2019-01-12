@@ -1,0 +1,41 @@
+# The configuration schema is defined by service.proto file
+# https://github.com/googleapis/googleapis/blob/master/google/api/service.proto
+type: google.api.Service
+config_version: 3
+
+# Name of the service configuration.
+# Replace PROJECT_ID with the ID of your GCP project:
+name: player.endpoints.PROJECT_ID.cloud.goog
+
+# API title to appear in the user interface (Google Cloud Console).
+title: Player gRPC API
+apis:
+- name: player.Player
+
+# API usage restrictions.
+usage:
+  rules:
+  # Allow only registered calls for all methods. This is mandatory for using quotas
+  - selector: "*"
+    allow_unregistered_calls: false
+
+# Quota settings.
+# Below is the configuration to set a quota of 5 call/min on CreatePlayer method
+metrics:
+  # Define a metric for CreatePlayer requests.
+  - name: "createplayer-requests"
+    display_name: "CreatePlayer requests"
+    value_type: INT64
+    metric_kind: DELTA
+quota:
+  limits:
+    # Define the limit or the createplayer-requests metric.
+    - name: "createplayer-limit"
+      metric: "createplayer-requests"
+      unit: "1/min/{project}"
+      values:
+        STANDARD: 5
+  metric_rules:
+      - metric_costs:
+          "createplayer-requests": 1
+        selector: player.Player.CreatePlayer
