@@ -40,12 +40,12 @@ $ kubectl create -f grpcapi-service.yaml
 kubectl get deployments
 kubectl get svc
 ```
-Using the above command, get the EXTERNAL-IP that was assigned automatically to the load balancer.
 
 ## Test your gRPC API using the client app located in cmd/client-grpc folder
 
 ```
-$ go run main.go -grpc-address=<EXTERNAL-IP> -grpc-port=8080
+$ EXTERNAL-IP=$(kubectl get service grpc-go-api-service --output jsonpath="{.status.loadBalancer.ingress[0].ip}")
+$ go run main.go -grpc-address=${EXTERNAL-IP} -grpc-port=8080
 ```
 
 ## Secure your gRPC API using Cloud Endpoints
@@ -56,7 +56,7 @@ Create a proto descriptor file
 $ protoc --include_imports --include_source_info --descriptor_set_out deployments/endpoints/player.pb api/proto/v1/player.proto
 ```
 
-Replace <YOUR_PROJECT_ID> with your own GCP Project ID in the following config files:
+Replace PROJECT_ID with your own GCP Project ID in the following config files:
 - deployments/endpoints/api_config.yaml
 - deployments/k8s/grpcapi-deployment.yaml
 - deployments/k8s/grpcapi-endpoints-deployment.yaml

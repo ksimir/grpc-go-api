@@ -4,11 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	v1 "github.com/ksimir/grpc-go-api/pkg/api/v1"
 )
@@ -23,11 +26,16 @@ type Config struct {
 	// gRPC server address/port connection parameters section
 	GRPCAddress string
 	GRPCPort    string
+	// gRPC authentication parameters section
+	key      string
+	token    string
+	keyfile  string
+	audience string // name of the service configuration in api_auth.yaml
 }
 
 // createPlayer calls the RPC method CreatePlayer of PlayerServer
-func createPlayer(client v1.PlayerClient, player *v1.PlayerRequest) {
-	resp, err := client.CreatePlayer(context.Background(), player)
+func createPlayer(ctx context.Context, client v1.PlayerClient, player *v1.PlayerRequest) {
+	resp, err := client.CreatePlayer(ctx, player)
 	if err != nil {
 		log.Fatalf("Could not create player: %v", err)
 	}
@@ -39,9 +47,9 @@ func createPlayer(client v1.PlayerClient, player *v1.PlayerRequest) {
 }
 
 // getCustomers calls the RPC method GetCustomers of CustomerServer
-func getPlayers(client v1.PlayerClient, filter *v1.PlayerFilter) {
+func getPlayers(ctx context.Context, client v1.PlayerClient, filter *v1.PlayerFilter) {
 	// calling the streaming API
-	stream, err := client.GetPlayers(context.Background(), filter)
+	stream, err := client.GetPlayers(ctx, filter)
 	if err != nil {
 		log.Fatalf("Error on get customers: %v", err)
 	}
@@ -58,8 +66,8 @@ func getPlayers(client v1.PlayerClient, filter *v1.PlayerFilter) {
 }
 
 // getCustomer calls the RPC method GetCustomers of CustomerServer
-func getPlayer(client v1.PlayerClient, filter *v1.PlayerId) {
-	player, err := client.GetPlayer(context.Background(), filter)
+func getPlayer(ctx context.Context, client v1.PlayerClient, filter *v1.PlayerId) {
+	player, err := client.GetPlayer(ctx, filter)
 	if err != nil {
 		log.Fatalf("Could not get Player: %v", err)
 	}
@@ -76,6 +84,10 @@ func main() {
 	var cfg Config
 	flag.StringVar(&cfg.GRPCAddress, "grpc-address", "", "gRPC address to connect to")
 	flag.StringVar(&cfg.GRPCPort, "grpc-port", "", "gRPC port to connect to")
+	flag.StringVar(&cfg.key, "api-key", "", "API key.")
+	flag.StringVar(&cfg.token, "token", "", "Authentication token.")
+	flag.StringVar(&cfg.keyfile, "keyfile", "", "Path to a Google service account key file.")
+	flag.StringVar(&cfg.audience, "audience", "", "Audience.")
 	flag.Parse()
 
 	address := cfg.GRPCAddress + ":" + cfg.GRPCPort
@@ -89,6 +101,40 @@ func main() {
 	// Creates a new CustomerClient
 	client := v1.NewPlayerClient(conn)
 
+	// API authentication section
+	if cfg.keyfile != "" {
+		log.Printf("Authenticating using Google service account key in %s", cfg.keyfile)
+		keyBytes, err := ioutil.ReadFile(cfg.keyfile)
+		if err != nil {
+			log.Fatalf("Unable to read service account key file %s: %v", cfg.keyfile, err)
+		}
+
+		tokenSource, err := google.JWTAccessTokenSourceFromJSON(keyBytes, cfg.audience)
+		if err != nil {
+			log.Fatalf("Error building JWT access token source: %v", err)
+		}
+		jwt, err := tokenSource.Token()
+		if err != nil {
+			log.Fatalf("Unable to generate JWT token: %v", err)
+		}
+		cfg.token = jwt.AccessToken
+		// NOTE: the generated JWT token has a 1h TTL.
+		// Make sure to refresh the token before it expires by calling TokenSource.Token() for each outgoing requests.
+		// Calls to this particular implementation of TokenSource.Token() are cheap.
+	}
+
+	ctx := context.Background()
+	// If API key is provided, then add x-api-key in the metadata
+	if cfg.key != "" {
+		log.Printf("Using API key: %s", cfg.key)
+		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("x-api-key", cfg.key))
+	}
+	// If service account is provided with a JSON key file
+	if cfg.token != "" {
+		log.Printf("Using authentication token: %s", cfg.token)
+		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("Authorization", fmt.Sprintf("Bearer %s", cfg.token)))
+	}
+
 	u1, err := uuid.NewRandom()
 	fmt.Printf("Player #1 ID is %s", u1.String())
 	player := &v1.PlayerRequest{
@@ -100,7 +146,7 @@ func main() {
 	}
 
 	// Create a new player
-	createPlayer(client, player)
+	createPlayer(ctx, client, player)
 
 	u2, err := uuid.NewRandom()
 	fmt.Printf("Player #2 ID is : %s", u2.String())
@@ -113,19 +159,19 @@ func main() {
 	}
 
 	// Create a new player
-	createPlayer(client, player)
+	createPlayer(ctx, client, player)
 
 	// Filter with an empty Keyword
 	filter := &v1.PlayerFilter{
 		Api:     apiVersion,
 		Keyword: "Samir Hammoudi",
 	}
-	getPlayers(client, filter)
+	getPlayers(ctx, client, filter)
 
 	// Get player with a specific ID
 	id := &v1.PlayerId{
 		Api: apiVersion,
 		Id:  "fb19b3e3-ee5f-4d68-b554-663b60032d3f",
 	}
-	getPlayer(client, id)
+	getPlayer(ctx, client, id)
 }

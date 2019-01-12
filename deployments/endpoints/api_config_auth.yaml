@@ -1,0 +1,35 @@
+# The configuration schema is defined by service.proto file
+# https://github.com/googleapis/googleapis/blob/master/google/api/service.proto
+type: google.api.Service
+config_version: 3
+
+# Name of the service configuration.
+# Replace PROJECT_ID with the ID of your GCP project:
+name: player.endpoints.PROJECT_ID.cloud.goog
+
+# API title to appear in the user interface (Google Cloud Console).
+title: Player gRPC API
+apis:
+- name: player.Player
+
+# API authentication settings. Service account needed.
+authentication:
+  providers:
+  - id: google_service_account
+    # Replace PROJECT_ID with the ID of your GCP project:
+    audiences: player.endpoints.PROJECT_ID.cloud.goog
+    # Replace SERVICE-ACCOUNT-ID with your service account's email address.
+    issuer: SERVICE-ACCOUNT-ID
+    jwks_uri: https://www.googleapis.com/robot/v1/metadata/x509/SERVICE-ACCOUNT-ID
+  rules:
+  # This auth rule will apply to all methods.
+  - selector: "*"
+    requirements:
+      - provider_id: google_service_account
+
+# API usage restrictions.
+usage:
+  rules:
+  # Allow unregistered calls for all methods.
+  - selector: "*"
+    allow_unregistered_calls: true
