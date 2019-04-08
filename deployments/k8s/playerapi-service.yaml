@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: player-service
+  labels:
+    app: player-api
+spec:
+  selector:
+    name: player-api
+  type: LoadBalancer    
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 50051

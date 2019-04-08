@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: game-api-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "ingress-ip"
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/ingress.class: "gce"
+    ingress.gcp.kubernetes.io/pre-shared-cert: "game-cert"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /player.Player/*
+        backend:
+          serviceName: player-service
+          servicePort: 8080
+      - path: /inventory.Inventory/*
+        backend:
+          serviceName: inventory-service
+          servicePort: 8080

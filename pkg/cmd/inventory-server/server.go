@@ -9,14 +9,14 @@ import (
 	// spanner client lib
 	"cloud.google.com/go/spanner"
 	"github.com/ksimir/grpc-go-api/pkg/logger"
-	"github.com/ksimir/grpc-go-api/pkg/protocol/grpc"
-	v1 "github.com/ksimir/grpc-go-api/pkg/service/v1"
+	grpc "github.com/ksimir/grpc-go-api/pkg/protocol/grpc/inventory-server"
+	v1 "github.com/ksimir/grpc-go-api/pkg/service/v1/inventory-service"
 )
 
 // Config is configuration for Server
 type Config struct {
 	// gRPC server start parameters section
-	// gRPC is TCP port to listen by gRPC server
+	// gRPC is TCP port to listen by gRPC serve
 	GRPCPort string
 
 	// Spanner DB parameters section
@@ -68,7 +68,7 @@ func RunServer() error {
 	}
 	defer dataClient.Close()
 
-	v1API := v1.NewPlayerServiceServer(dataClient)
+	v1API := v1.NewInventoryServiceServer(dataClient)
 
 	return grpc.RunServer(ctx, v1API, cfg.GRPCPort)
 }

@@ -4,12 +4,14 @@ package player;
 
 // The Player service definition.
 service Player {   
-  // Get all Players with filter - A server-to-client streaming RPC.
-  rpc GetPlayers(PlayerFilter) returns (stream PlayerRequest) {}
-  // Create a new Player - A simple RPC 
+  // Create a new Player
   rpc CreatePlayer(PlayerRequest) returns (PlayerResponse) {}
+  // Get all Players with filter
+  rpc GetPlayers(PlayerFilter) returns (stream PlayerRequest) {}
   // Return a specific player based on its id
   rpc GetPlayer(PlayerId) returns (PlayerRequest) {}
+  // Update an existing player
+  rpc UpdatePlayer(PlayerRequest) returns (PlayerResponse) {}
 }
 
 // Request message for creating a new player

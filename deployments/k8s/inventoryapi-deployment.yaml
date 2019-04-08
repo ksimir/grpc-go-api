@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory-api
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: inventory-api
+    spec:       
+      containers:
+      - name: inventory-api
+        image: asia.gcr.io/PROJECT_ID/inventory-api:v1 # replace PROJECT_ID
+        ports:
+        - containerPort: 50051
+        env:
+        - name: PROJECTID
+          value: "PROJECT_ID" # replace PROJECT_ID
+        - name: INSTANCE
+          value: "INSTANCE" # replace INSTANCE
+        - name: DATABASE
+          value: "DATABASE"  # replace DATABASE

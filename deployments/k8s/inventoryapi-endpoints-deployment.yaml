@@ -1,0 +1,46 @@
+# Use this deployment if you plan to deploy your gRPC service to Cloud Endpoints using ESP
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory-api
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: inventory-api
+    spec:       
+      containers:
+      - name: inventory-api
+        image: asia.gcr.io/PROJECT_ID/inventory-api:v1 # replace PROJECT_ID
+        imagePullPolicy: "Always"
+        ports:
+        - containerPort: 50051
+        env:
+        - name: PROJECTID
+          value: "PROJECT_ID" # replace PROJECT_ID
+        - name: INSTANCE
+          value: "INSTANCE" # replace INSTANCE
+        - name: DATABASE
+          value: "DATABASE"  # replace DATABASE       
+      - name: esp
+        image: gcr.io/endpoints-release/endpoints-runtime:1
+        args: [
+          "-S", "9000",
+          "-a", "grpc://127.0.0.1:50051",
+          "-s", "inventory.endpoints.PROJECT_ID.cloud.goog", # replace PROJECT_ID
+          "--rollout_strategy", "managed",
+          "-z", " ",
+        ]
+        volumeMounts:
+          - mountPath: /etc/nginx/ssl
+            name: nginx-ssl
+            readOnly: true
+        ports:
+          - containerPort: 9000
+      volumes:
+      - name: nginx-ssl
+        secret:
+           secretName: nginx-ssl
