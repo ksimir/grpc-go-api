@@ -130,8 +130,37 @@ $ go run main.go \
     --audience=player.endpoints.PROJECT_ID.cloud.goog \
 ```
 
-## Using a HTTP LB (ingress) to expose both gRPC services
+## Using a HTTP LB (ingress) to expose both gRPC services using managed SSL certificate
+
+Create a global static IP address
+```
+$ gcloud compute addresses create ingress-ip --global
+```
+
+Then we need to create a managed SSL certificate (replace 'api.domain.com' by your fqdn).
+NOTE: the DNS record for your domain must reference the IP address you created at the previous step.
+Otherwise you might get the error FAILED_NOT_VISIBLE for your managed SSL
+```
+$ gcloud beta compute ssl-certificates create game-cert --domain api.domain.com
+```
+
+Create nginx-ssl secret (any self-signed certificates seems to be ok)
+https://cloud.google.com/endpoints/docs/grpc/enabling-ssl#ssl_keys_and_certificates
+```
+$ cd deployments/cert
+$ kubectl create secret generic nginx-ssl \
+     --from-file=./nginx.crt --from-file=./nginx.key
+```
+
 To deploy the HTTP LB to expose both services, run the following command:
 ```
-$ kubectl create -f grpcapi-ingress.yaml
+$ kubectl delete svc player-service
+$ kubectl delete svc inventory-service
+$ kubectl delete deployment playerapi-endpoints-deployment.yaml
+$ kubectl delete deployment inventoryapi-endpoints-deployment.yaml
+$ kubectl create -f playerapi-endpoints-ingress-deployment.yaml
+$ kubectl create -f playerapi-endpoints-ingress-service.yaml
+$ kubectl create -f inventoryapi-endpoints-ingress-deployment.yaml
+$ kubectl create -f inventoryapi-endpoints-ingress-service.yaml
+$ kubectl create -f gameapi-ingress.yaml
 ```

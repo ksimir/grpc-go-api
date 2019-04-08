@@ -28,10 +28,19 @@ spec:
       - name: esp
         image: gcr.io/endpoints-release/endpoints-runtime:1
         args: [
-          "-P", "9000",
+          "-S", "9000",
           "-a", "grpc://127.0.0.1:50051",
           "-s", "player.endpoints.PROJECT_ID.cloud.goog", # replace PROJECT_ID
           "--rollout_strategy", "managed",
+          "-z", " ",
         ]
+        volumeMounts:
+          - mountPath: /etc/nginx/ssl
+            name: nginx-ssl
+            readOnly: true
         ports:
           - containerPort: 9000
+      volumes:
+      - name: nginx-ssl
+        secret:
+           secretName: nginx-ssl
