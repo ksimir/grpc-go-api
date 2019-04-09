@@ -30,7 +30,7 @@ $ gcloud container images list-tags asia.gcr.io/${PROJECT_ID}/inventory-api
 
 ## Deploy the Web app to GKE (first deployment then service)
 
-Replace PROJECT_ID, INSTANCE, DATABASE with your own GCP Project ID as well as your Cloud Spanner instance/db in the following config files:
+Replace `PROJECT_ID`, `INSTANCE`, `DATABASE` with your own GCP Project ID as well as your Cloud Spanner instance/db in the following config files:
 - deployments/k8s/playerapi-deployment.yaml
 - deployments/k8s/inventoryapi-deployment.yaml
 
@@ -62,7 +62,7 @@ $ protoc --include_imports --include_source_info --descriptor_set_out deployment
 $ protoc --include_imports --include_source_info --descriptor_set_out deployments/endpoints/inventory-service/inventory.pb api/proto/v1/inventory.proto
 ```
 
-Replace PROJECT_ID with your own GCP Project ID in the following config files:
+Replace `PROJECT_ID` with your own GCP Project ID in the following config files:
 - deployments/endpoints/player-service/api_config.yaml
 - deployments/endpoints/inventory-service/api_config.yaml
 - deployments/k8s/playerapi-endpoints-deployment.yaml
@@ -99,13 +99,13 @@ $ gcloud endpoints services deploy player-service/player.pb player-service/api_c
 Follow the instructions [here](https://cloud.google.com/docs/authentication/api-keys#creating_an_api_key) to create a new API key.
 
 Test your gRPC API quota using the created API key
-Replace API_KEY in the following command
+Replace `API_KEY` in the following command
 
 ```
 $ EXTERNAL-IP=$(kubectl get service player-service --output jsonpath="{.status.loadBalancer.ingress[0].ip}")
 $ go run main.go \
     --grpc-address=${EXTERNAL-IP} \
-    --grpc-port=8080
+    --grpc-port=8080 \
     --api-key=API_KEY
 ```
 
@@ -119,15 +119,15 @@ $ gcloud endpoints services deploy player-service/player.pb player-service/api_c
 Follow the instructions [here](https://cloud.google.com/endpoints/docs/grpc/service-account-authentication#creating_the_consumer_service_account_and_key) to create a new service account.
 
 Test your gRPC API using a service account
-Replace PROJECT_ID and SERVICE_ACCOUNT in the following command
+Replace `PROJECT_ID` and `SERVICE_ACCOUNT` in the following command
 
 ```
 $ EXTERNAL-IP=$(kubectl get service player-service --output jsonpath="{.status.loadBalancer.ingress[0].ip}")
 $ go run main.go \
     --grpc-address=${EXTERNAL-IP} \
-    --grpc-port=8080
+    --grpc-port=8080 \
     --keyfile=SERVICE_ACCOUNT_KEY.json \
-    --audience=player.endpoints.PROJECT_ID.cloud.goog \
+    --audience=player.endpoints.PROJECT_ID.cloud.goog
 ```
 
 ## Using a HTTP LB (ingress) to expose both gRPC services using managed SSL certificate
@@ -137,16 +137,16 @@ Step 1 - Create a global static IP address
 $ gcloud compute addresses create ingress-ip --global
 ```
 
-Step 2 - Create a managed SSL certificate (replace `api.domain.com` by your own fqdn).
+Step 2 - Create a managed SSL certificate (replace `API.DOMAIN.COM` by your own fqdn).
 ```
-$ gcloud beta compute ssl-certificates create game-cert --domain api.domain.com
+$ gcloud beta compute ssl-certificates create game-cert --domain API.DOMAIN.COM
 ```
 > NOTE: the DNS record for your domain must reference the IP address you created at the previous step.
 Otherwise you might get the error `FAILED_NOT_VISIBLE` for your managed SSL.
-In my example, `api.domain.com` DNS A record would point to the static IP generated during Step 1.
+In my example, `API.DOMAIN.COM` DNS A record would point to the static IP generated during Step 1.
 
-Following steps are needed to enable SSL on ESP on Kubernetes.
-https://cloud.google.com/endpoints/docs/grpc/enabling-ssl#ssl_keys_and_certificates
+The following steps (3 & 4) are needed to enable SSL on ESP on Kubernetes.
+For more details, please check https://cloud.google.com/endpoints/docs/grpc/enabling-ssl#ssl_keys_and_certificates
 
 Step 3 - Any self-signed certificates seems to be ok so you can create the SSL key and certificate using OpenSSL
 ```
@@ -159,17 +159,36 @@ Step 4 - Create a Kubernetes secret with your SSL key and certificate
 $ kubectl create secret generic nginx-ssl \
      --from-file=./nginx.crt --from-file=./nginx.key
 ```
-> FYI the k8s secret is used in the `playerapi-endpoints-ingress-deployment.yaml` and `inventoryapi-endpoints-ingress-deployment.yaml`
+> FYI this k8s secret is used in the `playerapi-endpoints-ingress-deployment.yaml` and `inventoryapi-endpoints-ingress-deployment.yaml`
 
-Step 5 - Finally redeploy the k8s deployment and services (made for ingress) and deploy the HTTP LB to expose both gRPC APIs.
+Step 5 - Clean up the previously deployed deployments and services
 ```
 $ kubectl delete svc player-service
 $ kubectl delete svc inventory-service
 $ kubectl delete deployment playerapi-endpoints-deployment.yaml
 $ kubectl delete deployment inventoryapi-endpoints-deployment.yaml
+```
+
+Step 6 - Finally redeploy the k8s deployments and services (updated to work with the HTTP LB) and deploy the HTTP LB to expose both gRPC APIs.
+
+Replace `PROJECT_ID`, `INSTANCE`, `DATABASE` with your own GCP Project ID as well as your Cloud Spanner instance/db in the following config files:
+- deployments/k8s/playerapi-endpoints-deployment.yaml
+- deployments/k8s/inventoryapi-endpoints-deployment.yaml
+```
 $ kubectl create -f playerapi-endpoints-ingress-deployment.yaml
 $ kubectl create -f playerapi-endpoints-ingress-service.yaml
 $ kubectl create -f inventoryapi-endpoints-ingress-deployment.yaml
 $ kubectl create -f inventoryapi-endpoints-ingress-service.yaml
 $ kubectl create -f gameapi-ingress.yaml
 ```
+
+Step 7 - Test your both gRPC APIs exposed by the HTTP LB (the gRPC path is used to route to the correct backend).
+Replace `API.DOMAIN.COM` and `API_KEY` in the following command by the API key previously created
+```
+$ cd cmd/client-grpc
+$ go run main.go \
+    --grpc-address=API.DOMAIN.COM \
+    --grpc-port=443 \
+    --api-key=API_KEY
+```
+> Note that the test client (in `cmd/client-grpc`) only dials to the HTTP LB IP address once, the same gRPC connection is used to create a client for each gRPC API

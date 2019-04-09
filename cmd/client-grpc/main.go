@@ -111,8 +111,8 @@ func main() {
 		defer conn.Close()
 	}
 
-	// Creates a new CustomerClient
-	client := pc.NewPlayerClient(conn)
+	// Creates a new client for each gRPC API
+	playclient := pc.NewPlayerClient(conn)
 	invClient := ic.NewInventoryClient(conn)
 
 	// API authentication section
@@ -160,7 +160,7 @@ func main() {
 	}
 
 	// Create a new player
-	createPlayer(ctx, client, player)
+	createPlayer(ctx, playclient, player)
 
 	u2, err := uuid.NewRandom()
 	fmt.Printf("Player #2 ID is : %s", u2.String())
@@ -173,14 +173,14 @@ func main() {
 	}
 
 	// Create a new player
-	createPlayer(ctx, client, player)
+	createPlayer(ctx, playclient, player)
 
 	// Get player with a specific ID
 	id := &pc.PlayerId{
 		Api: apiVersion,
 		Id:  "fb19b3e3-ee5f-4d68-b554-663b60032d3f",
 	}
-	getPlayer(ctx, client, id)
+	getPlayer(ctx, playclient, id)
 
 	fmt.Printf("Adding Item 1 to Player fb19b3e3-ee5f-4d68-b554-663b60032d3f")
 	item := &ic.ItemRequest{
