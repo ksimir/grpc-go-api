@@ -132,27 +132,36 @@ $ go run main.go \
 
 ## Using a HTTP LB (ingress) to expose both gRPC services using managed SSL certificate
 
-Create a global static IP address
+Step 1 - Create a global static IP address
 ```
 $ gcloud compute addresses create ingress-ip --global
 ```
 
-Then we need to create a managed SSL certificate (replace 'api.domain.com' by your fqdn).
-NOTE: the DNS record for your domain must reference the IP address you created at the previous step.
-Otherwise you might get the error FAILED_NOT_VISIBLE for your managed SSL
+Step 2 - Create a managed SSL certificate (replace `api.domain.com` by your own fqdn).
 ```
 $ gcloud beta compute ssl-certificates create game-cert --domain api.domain.com
 ```
+> NOTE: the DNS record for your domain must reference the IP address you created at the previous step.
+Otherwise you might get the error `FAILED_NOT_VISIBLE` for your managed SSL.
+In my example, `api.domain.com` DNS A record would point to the static IP generated during Step 1.
 
-Create nginx-ssl secret (any self-signed certificates seems to be ok)
+Following steps are needed to enable SSL on ESP on Kubernetes.
 https://cloud.google.com/endpoints/docs/grpc/enabling-ssl#ssl_keys_and_certificates
+
+Step 3 - Any self-signed certificates seems to be ok so you can create the SSL key and certificate using OpenSSL
 ```
-$ cd deployments/cert
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout ./nginx.key -out ./nginx.crt
+```
+
+Step 4 - Create a Kubernetes secret with your SSL key and certificate
+```
 $ kubectl create secret generic nginx-ssl \
      --from-file=./nginx.crt --from-file=./nginx.key
 ```
+> FYI the k8s secret is used in the `playerapi-endpoints-ingress-deployment.yaml` and `inventoryapi-endpoints-ingress-deployment.yaml`
 
-To deploy the HTTP LB to expose both services, run the following command:
+Step 5 - Finally redeploy the k8s deployment and services (made for ingress) and deploy the HTTP LB to expose both gRPC APIs.
 ```
 $ kubectl delete svc player-service
 $ kubectl delete svc inventory-service
