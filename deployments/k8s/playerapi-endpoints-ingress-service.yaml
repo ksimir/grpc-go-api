@@ -1,0 +1,18 @@
+# Use this service if you plan to deploy your gRPC service to Cloud Endpoints using ESP
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    cloud.google.com/app-protocols: '{"my-port":"HTTP2"}'
+  name: player-service
+  labels:
+    app: player-api
+spec:
+  selector:
+    name: player-api
+  type: NodePort    
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 9000
+    name: my-port

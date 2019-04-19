@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 
@@ -13,7 +14,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
-	ic "github.com/ksimir/grpc-go-api/pkg/api/v1/inventory"
 	pc "github.com/ksimir/grpc-go-api/pkg/api/v1/player"
 )
 
@@ -48,16 +48,22 @@ func createPlayer(ctx context.Context, client pc.PlayerClient, player *pc.Player
 	}
 }
 
-// addItem calls the RPC method AddItem of InventoryServer
-func addItem(ctx context.Context, client ic.InventoryClient, item *ic.ItemRequest) {
-	resp, err := client.AddItem(ctx, item)
+// getCustomers calls the RPC method GetCustomers of CustomerServer
+func getPlayers(ctx context.Context, client pc.PlayerClient, filter *pc.PlayerFilter) {
+	// calling the streaming API
+	stream, err := client.GetPlayers(ctx, filter)
 	if err != nil {
-		log.Fatalf("Could not add item: %v", err)
+		log.Fatalf("Error on get customers: %v", err)
 	}
-	if resp.Success {
-		log.Printf("A new item has been added")
-	} else {
-		log.Printf("Failed to add the new item")
+	for {
+		player, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("%v.GetPlayers(_) = _, %v", client, err)
+		}
+		log.Printf("Player: %v", player)
 	}
 }
 
@@ -111,9 +117,8 @@ func main() {
 		defer conn.Close()
 	}
 
-	// Creates a new client for each gRPC API
-	playclient := pc.NewPlayerClient(conn)
-	invClient := ic.NewInventoryClient(conn)
+	// Creates a new CustomerClient
+	client := pc.NewPlayerClient(conn)
 
 	// API authentication section
 	if cfg.keyfile != "" {
@@ -160,7 +165,7 @@ func main() {
 	}
 
 	// Create a new player
-	createPlayer(ctx, playclient, player)
+	createPlayer(ctx, client, player)
 
 	u2, err := uuid.NewRandom()
 	fmt.Printf("Player #2 ID is : %s", u2.String())
@@ -173,23 +178,19 @@ func main() {
 	}
 
 	// Create a new player
-	createPlayer(ctx, playclient, player)
+	createPlayer(ctx, client, player)
+
+	// Filter with an empty Keyword
+	filter := &pc.PlayerFilter{
+		Api:     apiVersion,
+		Keyword: "Samir Hammoudi",
+	}
+	getPlayers(ctx, client, filter)
 
 	// Get player with a specific ID
 	id := &pc.PlayerId{
 		Api: apiVersion,
 		Id:  "fb19b3e3-ee5f-4d68-b554-663b60032d3f",
 	}
-	getPlayer(ctx, playclient, id)
-
-	fmt.Printf("Adding Item 1 to Player fb19b3e3-ee5f-4d68-b554-663b60032d3f")
-	item := &ic.ItemRequest{
-		Api:      apiVersion,
-		Id:       2,
-		Pid:      "fb19b3e3-ee5f-4d68-b554-663b60032d3f",
-		Quantity: 1,
-	}
-
-	// Create a new player
-	addItem(ctx, invClient, item)
+	getPlayer(ctx, client, id)
 }

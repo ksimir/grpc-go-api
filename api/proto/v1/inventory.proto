@@ -1,0 +1,32 @@
+syntax = "proto3";
+package inventory;
+
+// The Inventory service definition.
+service Inventory {   
+  // Add a new Item in the inventory
+  rpc AddItem(ItemRequest) returns (ItemResponse) {}
+  // Get all items from a specific player
+  rpc GetItems(ItemRequest) returns (stream ItemRequest) {}
+  // Return a specific item based on its id and player id
+  rpc GetItem(ItemRequest) returns (ItemRequest) {}
+  // Update an item 
+  rpc UpdateItem(ItemRequest) returns (ItemResponse) {}
+  // Delete an item
+  rpc DeleteItem(ItemRequest) returns (ItemResponse) {}
+}
+
+// Request message for adding/deleting/getting an Item
+message ItemRequest {
+  // API versioning
+  string api = 1;
+  int64 id = 2;  // Unique ID number for an Item.
+  string pid = 3; // Unique ID number for a Player.
+  int64 quantity = 4;
+}
+
+message ItemResponse {
+  // API versioning
+  string api = 1;
+  bool success = 2;
+  string error = 3;
+}

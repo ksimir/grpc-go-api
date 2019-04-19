@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	v1 "github.com/ksimir/grpc-go-api/pkg/api/v1"
+	v1 "github.com/ksimir/grpc-go-api/pkg/api/v1/player"
 	"github.com/ksimir/grpc-go-api/pkg/logger"
 )
 
@@ -54,7 +54,7 @@ func (s *server) CreatePlayer(ctx context.Context, in *v1.PlayerRequest) (*v1.Pl
 	start := time.Now()
 
 	if err := savePlayer(ctx, os.Stdout, in, s.dataClient); err != nil {
-		logger.Log.Fatal("Failed to save player to Spanner", zap.String("Player ID", in.Id))
+		logger.Log.Error("Failed to save player to Spanner", zap.String("Player ID", in.Id))
 		return &v1.PlayerResponse{Api: apiVersion, Id: in.Id, Success: false}, err
 	}
 
@@ -73,7 +73,7 @@ func (s *server) GetPlayers(filter *v1.PlayerFilter, stream v1.Player_GetPlayers
 
 	players, err := readPlayersByUsername(context.Background(), os.Stdout, filter, s.dataClient)
 	if err != nil {
-		logger.Log.Fatal("Failed to read players information from Spanner")
+		logger.Log.Error("Failed to read players information from Spanner")
 		return err
 	}
 
@@ -104,7 +104,7 @@ func (s *server) GetPlayer(ctx context.Context, filter *v1.PlayerId) (*v1.Player
 
 	players, err := readPlayerByID(ctx, os.Stdout, filter, s.dataClient)
 	if err != nil {
-		logger.Log.Fatal("Failed to read player information from Spanner")
+		logger.Log.Error("Failed to read player information from Spanner")
 		return nil, err
 	}
 
@@ -122,6 +122,18 @@ func (s *server) GetPlayer(ctx context.Context, filter *v1.PlayerId) (*v1.Player
 		}
 	}
 	return &player, nil
+}
+
+// UpdatePlayer an existing Player
+func (s *server) UpdatePlayer(ctx context.Context, in *v1.PlayerRequest) (*v1.PlayerResponse, error) {
+	// check if the API version requested by client is supported by server
+	if err := s.checkAPI(in.Api); err != nil {
+		return nil, err
+	}
+
+	//TODO
+
+	return &v1.PlayerResponse{Api: apiVersion, Id: in.Id, Success: true}, nil
 }
 
 // savePlayer saves a player to Cloud Spanner

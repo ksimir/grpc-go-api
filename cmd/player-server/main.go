@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	cmd "github.com/ksimir/grpc-go-api/pkg/cmd/server"
+	cmd "github.com/ksimir/grpc-go-api/pkg/cmd/player-server"
 )
 
 func main() {

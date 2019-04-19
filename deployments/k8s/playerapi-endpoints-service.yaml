@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: grpc-go-api-service
+  name: player-service
   labels:
-    app: grpc-go-api
+    app: player-api
 spec:
   selector:
-    name: grpc-go-api
+    name: player-api
   type: LoadBalancer    
   ports:
   - port: 8080

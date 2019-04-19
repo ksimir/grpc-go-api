@@ -2,21 +2,29 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: grpc-go-api-deployment
+  name: player-deployment
   labels:
-    app: grpc-go-api
+    app: player-api
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        name: grpc-go-api
+        name: player-api
     spec:       
       containers:
-      - name: grpc-go-api
-        image: asia.gcr.io/PROJECT_ID/grpc-go-api:v1 # replace PROJECT_ID
+      - name: player-api
+        image: asia.gcr.io/PROJECT_ID/player-api:v1 # replace PROJECT_ID
+        imagePullPolicy: "Always"
         ports:
         - containerPort: 50051
+        env:
+        - name: PROJECTID
+          value: "PROJECT_ID" # replace PROJECT_ID
+        - name: INSTANCE
+          value: "INSTANCE" # replace INSTANCE
+        - name: DATABASE
+          value: "DATABASE"  # replace DATABASE
       - name: esp
         image: gcr.io/endpoints-release/endpoints-runtime:1
         args: [

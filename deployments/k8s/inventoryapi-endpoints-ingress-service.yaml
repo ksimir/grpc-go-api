@@ -1,0 +1,18 @@
+# Use this service if you plan to deploy your gRPC service to Cloud Endpoints using ESP
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    cloud.google.com/app-protocols: '{"my-port":"HTTP2"}'
+  name: inventory-service
+  labels:
+    app: inventory-api
+spec:
+  selector:
+    name: inventory-api
+  type: NodePort    
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 9000
+    name: my-port
