@@ -1,6 +1,6 @@
 # grpc-go-api
-Sample gRPC API server written in golang using Cloud Spanner on GCP (Google Cloud Platform) as storage layer.
-This sample uses GKE (Google Kubernetes Engine) on GCP to host the gRPC API server.
+Sample gRPC API server (often used in games) written in golang using Cloud Spanner on GCP (Google Cloud Platform) as storage layer. 
+This sample uses GKE (Google Kubernetes Engine) on GCP to host the gRPC API server and use Cloud Endpoints to secure our API and GCLB (L7 LB - ingress in k8s) to load balance the service.
 
 To get started with GCP, please follow this [link](https://cloud.google.com/gcp/getting-started/).
 
