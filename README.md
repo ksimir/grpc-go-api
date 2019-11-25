@@ -11,6 +11,10 @@ To get started with GCP, please follow this [link](https://cloud.google.com/gcp/
 export PROJECT_ID=$(gcloud config list project --format "value(core.project)")
 ```
 
+## Create a GKE cluster:
+Follow the procedure [here](https://cloud.google.com/kubernetes-engine/docs/how-to/creating-a-cluster) to create a GKE cluster.
+Note: in order to have your GKE node talk to Cloud Spanner, you need to change the default access of the node pool to "Allow full access to all Cloud APIs". You will also need to grant Cloud Spanner Database User role to the service account used by the GKE nodes.
+
 ## Build Docker image using as parameters your own GCP project info:
 Update the below command with your own GCP Project ID as well as Cloud Spanner instance/database names.
 ```
